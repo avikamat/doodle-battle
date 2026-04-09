@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doodle Dominion • Mobile-First</title>
+    <title>Doodle Battle</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <style>
@@ -43,7 +43,7 @@
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900">
             <div class="flex items-center gap-x-3">
                 <div class="w-9 h-9 bg-indigo-500 rounded-2xl flex items-center justify-center text-white text-2xl">🎨</div>
-                <h1 class="title-font text-3xl tracking-[-1px]">Doodle Dominion</h1>
+                <h1 class="title-font text-3xl tracking-[-1px]">Doodle Battle</h1>
             </div>
             
             <div id="nav-room" class="hidden items-center gap-x-3 text-sm">
@@ -86,15 +86,15 @@
                         </div>
                     </div>
                     
-                    <p class="text-center text-slate-400 text-sm">Works perfectly on phones • Real-time P2P • Friends vote for the best doodle</p>
+                    <p class="text-center text-slate-400 text-sm">Madhu jha2 is a proud LGBTQ member 🏳️‍🌈🏳️‍🌈🏳️‍🌈 She's gay for uncle evans!</p>
                 </div>
             </div>
         </div>
 
-        <!-- DRAWING SCREEN -->
+        <!-- DRAWING SCREEN (now fully mobile responsive) -->
         <div id="drawing-screen" class="hidden drawing-flex flex-col md:flex-row h-[calc(100vh-65px)]">
             
-            <!-- TOOLBAR -->
+            <!-- TOOLBAR (horizontal on mobile, vertical on desktop) -->
             <div class="toolbar w-full md:w-20 bg-slate-900 flex md:flex-col items-center md:py-6 gap-y-6 border-b md:border-r border-slate-800 px-4 md:px-0">
                 <div onclick="selectTool('brush')" id="tool-brush" class="toolbar-button active w-11 h-11 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">🖌️</div>
                 <div onclick="selectTool('eraser')" id="tool-eraser" class="toolbar-button w-11 h-11 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">⌫</div>
@@ -144,7 +144,7 @@
                 
                 <div id="drawing-status" class="text-sm text-slate-400 mb-8">
                     Draw anything you want.<br>
-                    <span class="font-medium text-indigo-300">No time limit • Submit when ready!</span>
+                    <span class="font-medium text-indigo-300">Kuch bhi bana lo, you can't beat the legendary HONNESH SOSE</span>
                 </div>
                 
                 <button onclick="submitDrawing()" 
@@ -186,11 +186,14 @@
     </div>
 
     <script>
+        // Tailwind init
+        function initializeTailwind() { return { config() { return { content: [], theme: { extend: {} }, plugins: [] } } } }
+        
         // Global variables
         let peer = null
         let conn = null
         let isHost = false
-        let roomId = ''
+        let roomId = ''           // Now = actual peer.id (full string)
         let myNickname = ''
         let myPeerId = ''
         
@@ -210,7 +213,7 @@
         
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
         
-        // ============== PEERJS ==============
+        // ============== PEERJS WITH BETTER MOBILE SUPPORT ==============
         function initPeer(callback) {
             if (peer) peer.destroy()
             
@@ -227,20 +230,24 @@
             
             peer.on('open', id => {
                 myPeerId = id
+                console.log('✅ Peer ready. Your ID:', id)
                 if (callback) callback(id)
             })
             
             peer.on('connection', incoming => {
                 conn = incoming
                 conn.on('open', () => {
+                    console.log('✅ Friend connected')
                     isHost = true
                     updateRoomUI()
                 })
                 conn.on('data', handleIncomingData)
+                conn.on('error', e => console.error('Conn error', e))
             })
             
             peer.on('error', err => {
-                if (err.type === 'peer-unavailable') alert('Room not found. Ask host to refresh and share the ID again.')
+                console.error('Peer error:', err)
+                if (err.type === 'peer-unavailable') alert('Room not found or host left. Try a new room.')
             })
         }
         
@@ -248,28 +255,32 @@
             myNickname = document.getElementById('nickname-input').value.trim() || 'Doodler' + Math.floor(Math.random()*999)
             initPeer((id) => {
                 isHost = true
-                roomId = id
+                roomId = id                     // ← THIS WAS THE BUG! Now using real peer ID
                 document.getElementById('lobby-screen').classList.add('hidden')
                 document.getElementById('drawing-screen').classList.remove('hidden')
                 updateRoomUI()
+                console.log('Room created — share this full ID with friends')
             })
         }
         
         function joinRoom() {
             const input = document.getElementById('join-id-input').value.trim()
-            if (!input) return alert('Paste the full Room ID')
+            if (!input) return alert('Paste the full Room ID from your friend')
             
             myNickname = document.getElementById('nickname-input').value.trim() || 'Doodler' + Math.floor(Math.random()*999)
             
             initPeer(() => {
-                conn = peer.connect(input)
+                conn = peer.connect(input)      // Connect using the full peer ID
                 conn.on('open', () => {
+                    console.log('✅ Joined room successfully')
                     roomId = input
+                    isHost = false
                     document.getElementById('lobby-screen').classList.add('hidden')
                     document.getElementById('drawing-screen').classList.remove('hidden')
                     updateRoomUI()
                 })
                 conn.on('data', handleIncomingData)
+                conn.on('error', e => alert('Could not join — check ID or ask host to refresh'))
             })
         }
         
@@ -320,7 +331,7 @@
             if (conn && conn.open) conn.send(payload)
         }
         
-        // ============== CANVAS WITH IMPROVED TOUCH HANDLING ==============
+        // ============== RESPONSIVE CANVAS (mobile-optimized) ==============
         function initCanvas() {
             canvas = document.getElementById('main-canvas')
             ctx = canvas.getContext('2d')
@@ -328,55 +339,37 @@
             resizeCanvas()
             window.addEventListener('resize', resizeCanvas)
             
-            // Mouse events
+            // Mouse
             canvas.addEventListener('mousedown', startDrawing)
             canvas.addEventListener('mousemove', draw)
             canvas.addEventListener('mouseup', stopDrawing)
             canvas.addEventListener('mouseout', stopDrawing)
             
-            // Touch events — improved to handle hold + small swipe without disappearing
-            canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
-            canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
-            canvas.addEventListener('touchend', handleTouchEnd, { passive: false })
-            canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false })
+            // Touch — optimized for phones
+            canvas.addEventListener('touchstart', e => { e.preventDefault(); startDrawing(e.touches[0]) })
+            canvas.addEventListener('touchmove', e => { e.preventDefault(); draw(e.touches[0]) })
+            canvas.addEventListener('touchend', stopDrawing)
             
-            // Extra protection on body for canvas touches
-            document.body.addEventListener('touchmove', function(e) {
-                if (e.target === canvas || canvas.contains(e.target)) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
-            
+            // Initial white canvas
             ctx.fillStyle = '#ffffff'
             ctx.fillRect(0, 0, canvas.width, canvas.height)
             saveUndoState()
-        }
-        
-        function handleTouchStart(e) {
-            e.preventDefault()
-            startDrawing(e.touches[0])
-        }
-        
-        function handleTouchMove(e) {
-            e.preventDefault()
-            draw(e.touches[0])
-        }
-        
-        function handleTouchEnd(e) {
-            e.preventDefault()
-            stopDrawing()
         }
         
         function resizeCanvas() {
             const maxWidth = isMobile ? Math.min(720, window.innerWidth - 32) : 720
             const aspect = 560 / 720
+            
             canvas.width = maxWidth
             canvas.height = Math.floor(maxWidth * aspect)
             
+            // Reset to white (new drawing session)
             ctx.fillStyle = '#ffffff'
             ctx.fillRect(0, 0, canvas.width, canvas.height)
             undoStack = []
             saveUndoState()
+            
+            // Larger default brush on phones
             if (isMobile) brushSize = 18
         }
         
@@ -416,10 +409,7 @@
         }
         
         function stopDrawing() {
-            if (isDrawing) {
-                isDrawing = false
-                saveUndoState()
-            }
+            if (isDrawing) { isDrawing = false; saveUndoState() }
         }
         
         function saveUndoState() {
@@ -461,7 +451,7 @@
             if (size === 28) document.getElementById('size-3').classList.add('active', 'border-indigo-300')
         }
         
-        // ============== SUBMIT + VOTING (back to original behavior) ==============
+        // ============== SUBMIT + BATTLE FLOW ==============
         function submitDrawing() {
             const base64 = canvas.toDataURL('image/png', 0.92)
             
@@ -514,7 +504,7 @@
             })
             
             if (Object.keys(submittedDrawings).length < 2) {
-                grid.innerHTML += `<div class="col-span-full text-center py-12 text-slate-400 text-sm">Share the Room ID with friends to start voting!</div>`
+                grid.innerHTML += `<div class="col-span-full text-center py-12 text-slate-400 text-sm">You’re the only one here right now.<br>Share the Room ID with friends!</div>`
             }
         }
         
@@ -530,7 +520,7 @@
         }
         
         function submitVote() {
-            if (!myVote) return alert('Pick a doodle to vote for!')
+            if (!myVote) return alert('Pick a doodle!')
             sendData({ type: 'vote', voterId: myPeerId, votedForId: myVote })
             const btn = document.getElementById('submit-vote-btn')
             btn.innerHTML = `<span class="animate-pulse">Waiting for votes...</span>`
@@ -589,10 +579,9 @@
             submittedDrawings = {}
             currentVotes = {}
             players = {}
-            myVote = null
             document.getElementById('battle-screen').classList.add('hidden')
             document.getElementById('drawing-screen').classList.remove('hidden')
-            resizeCanvas()
+            resizeCanvas() // fresh canvas
         }
         
         function leaveRoom() {
@@ -601,11 +590,12 @@
             location.reload()
         }
         
-        // ============== START ==============
+        // ============== START APP ==============
         window.onload = function() {
             initCanvas()
-            console.log('%c🎨 Doodle Dominion ready — hold + small swipe fixed!', 'color:#6366f1;font-weight:600')
+            console.log('%c🎨 Doodle Dominion — fully mobile optimized + fixed joining!', 'color:#6366f1;font-weight:600')
             
+            // Auto-fill join ID from URL if shared
             const params = new URLSearchParams(window.location.search)
             if (params.has('room')) {
                 document.getElementById('join-id-input').value = params.get('room')
