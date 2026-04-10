@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Doodle Battle</title>
+    <title>Doodle Dominion • Professional</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
         
@@ -15,327 +16,302 @@
         #main-canvas {
             background: #ffffff;
             border: 3px solid #e2e8f0;
-            border-radius: 16px;
+            border-radius: 20px;
             box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
             touch-action: none;
             max-width: 100%;
         }
         
-        .canvas-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 12px;
-            background: #f8fafc;
-            border-radius: 20px;
+        .canvas-wrapper {
+            background: linear-gradient(145deg, #1f2937, #111827);
+            padding: 20px;
+            border-radius: 24px;
         }
         
-        @media (max-width: 768px) {
-            .toolbar { flex-direction: row !important; gap: 12px; padding: 12px; overflow-x: auto; }
-            .right-panel { order: 3; width: 100% !important; }
-            .drawing-flex { flex-direction: column !important; }
+        .daisy-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .toolbar-button {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-200 min-h-screen">
-    <div class="max-w-7xl mx-auto">
-        <!-- NAVBAR -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900">
-            <div class="flex items-center gap-x-3">
-                <div class="w-9 h-9 bg-indigo-500 rounded-2xl flex items-center justify-center text-white text-2xl">🎨</div>
-                <h1 class="title-font text-3xl tracking-[-1px]">Doodle Battle</h1>
+<body class="bg-base-300 text-base-content min-h-screen">
+    <!-- NAVBAR -->
+    <div class="navbar bg-base-100 shadow-xl border-b border-base-200 sticky top-0 z-50">
+        <div class="navbar-start">
+            <div class="flex items-center gap-x-3 px-6">
+                <div class="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center text-3xl shadow-inner">🎨</div>
+                <h1 class="title-font text-3xl tracking-[-1px] text-primary">Doodle Dominion</h1>
             </div>
-            
-            <div id="nav-room" class="hidden items-center gap-x-3 text-sm">
-                <div class="px-4 py-2 bg-slate-800 rounded-3xl font-medium flex items-center gap-x-2">
-                    <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                    ROOM <span id="room-code-display" class="font-mono text-indigo-400 text-xs"></span>
-                </div>
-                <button onclick="copyRoomID()" class="px-5 py-2 bg-slate-800 hover:bg-slate-700 rounded-3xl flex items-center gap-x-2 text-xs font-medium">
-                    📋 Copy ID
-                </button>
-                <button onclick="leaveRoom()" class="px-5 py-2 text-slate-400 hover:text-white flex items-center gap-x-1 text-sm">← Leave</button>
-            </div>
-            
-            <div id="player-name-display" class="hidden text-sm font-medium px-4 py-1 bg-slate-900 rounded-3xl"></div>
         </div>
+        
+        <div id="nav-room" class="navbar-center hidden items-center gap-x-4">
+            <div class="badge badge-primary badge-lg font-mono flex items-center gap-x-2 px-6">
+                <div class="w-3 h-3 bg-success rounded-full animate-pulse"></div>
+                ROOM <span id="room-code-display" class="font-bold"></span>
+            </div>
+            <button onclick="copyRoomID()" class="btn btn-sm btn-ghost gap-x-2">
+                📋 Copy ID
+            </button>
+            <button onclick="leaveRoom()" class="btn btn-sm btn-ghost text-error">Leave Room</button>
+        </div>
+        
+        <div class="navbar-end pr-6">
+            <div id="player-name-display" class="hidden items-center gap-x-2 px-5 py-2 bg-base-200 rounded-3xl text-sm font-medium">
+                👤 <span id="nickname-show"></span>
+            </div>
+        </div>
+    </div>
 
-        <!-- LOBBY -->
-        <div id="lobby-screen" class="flex flex-col items-center justify-center min-h-[calc(100vh-65px)] px-6">
-            <div class="max-w-md w-full bg-slate-900 rounded-3xl p-8 shadow-2xl">
-                <h2 class="text-4xl font-semibold text-center mb-8 title-font tracking-tight">Doodle Battle Time!</h2>
-                
-                <div class="space-y-6">
-                    <div>
-                        <label class="text-slate-400 text-sm block mb-2">Your nickname</label>
-                        <input id="nickname-input" type="text" placeholder="CoolDoodler42" 
-                               class="w-full bg-slate-800 border border-slate-700 focus:border-indigo-400 rounded-2xl px-5 py-4 text-lg outline-none">
-                    </div>
+    <!-- LOBBY -->
+    <div id="lobby-screen" class="hero min-h-[calc(100vh-65px)]">
+        <div class="hero-content max-w-2xl w-full flex-col">
+            <div class="card w-full bg-base-100 shadow-2xl">
+                <div class="card-body items-center text-center">
+                    <h2 class="card-title title-font text-5xl tracking-tight mb-4">Professional Doodle Battles</h2>
+                    <p class="text-base-content/70 max-w-xs">Real-time. Beautiful. No sign-up. Just pure creative chaos with friends.</p>
                     
-                    <div class="grid grid-cols-2 gap-4">
-                        <button onclick="createRoom()" 
-                                class="bg-indigo-500 hover:bg-indigo-600 transition-colors text-white rounded-3xl py-6 text-xl font-semibold flex items-center justify-center gap-x-3">
-                            <span class="text-3xl">✦</span> CREATE ROOM
-                        </button>
+                    <div class="divider"></div>
+                    
+                    <div class="w-full max-w-md space-y-6">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Your nickname</span></label>
+                            <input id="nickname-input" type="text" placeholder="ProDoodler42" 
+                                   class="input input-bordered input-primary w-full text-lg">
+                        </div>
                         
-                        <div class="bg-slate-800 rounded-3xl p-2">
-                            <input id="join-id-input" placeholder="Paste full Room ID" 
-                                   class="w-full bg-transparent px-5 py-4 outline-none text-center font-mono text-base">
-                            <button onclick="joinRoom()" 
-                                    class="w-full mt-2 bg-slate-700 hover:bg-slate-600 rounded-2xl py-4 text-lg font-medium">JOIN ROOM</button>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button onclick="createRoom()" 
+                                    class="btn btn-primary btn-lg gap-x-3 text-xl">
+                                <span class="text-3xl">✦</span> CREATE ROOM
+                            </button>
+                            
+                            <div class="card bg-base-200 border border-base-300">
+                                <div class="card-body p-4">
+                                    <input id="join-id-input" placeholder="Paste full Room ID here" 
+                                           class="input input-bordered w-full text-center font-mono">
+                                    <button onclick="joinRoom()" class="btn btn-secondary btn-block mt-4">JOIN ROOM</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <p class="text-center text-slate-400 text-sm">Madhu jha2 is a proud LGBTQ member 🏳️‍🌈🏳️‍🌈🏳️‍🌈 She's gay for uncle evans!</p>
                 </div>
             </div>
-        </div>
-
-        <!-- DRAWING SCREEN (now fully mobile responsive) -->
-        <div id="drawing-screen" class="hidden drawing-flex flex-col md:flex-row h-[calc(100vh-65px)]">
             
-            <!-- TOOLBAR (horizontal on mobile, vertical on desktop) -->
-            <div class="toolbar w-full md:w-20 bg-slate-900 flex md:flex-col items-center md:py-6 gap-y-6 border-b md:border-r border-slate-800 px-4 md:px-0">
-                <div onclick="selectTool('brush')" id="tool-brush" class="toolbar-button active w-11 h-11 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">🖌️</div>
-                <div onclick="selectTool('eraser')" id="tool-eraser" class="toolbar-button w-11 h-11 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">⌫</div>
-                
-                <div class="w-px h-8 md:h-px md:w-11 bg-slate-700 mx-2 md:mx-0"></div>
-                
-                <!-- Color palette -->
-                <div class="grid grid-cols-4 md:grid-cols-3 gap-2 flex-shrink-0">
-                    <div onclick="setColor('#000000')" class="w-7 h-7 rounded-2xl shadow-inner" style="background:#000000"></div>
-                    <div onclick="setColor('#ef4444')" class="w-7 h-7 rounded-2xl shadow-inner" style="background:#ef4444"></div>
-                    <div onclick="setColor('#3b82f6')" class="w-7 h-7 rounded-2xl shadow-inner" style="background:#3b82f6"></div>
-                    <div onclick="setColor('#10b981')" class="w-7 h-7 rounded-2xl shadow-inner" style="background:#10b981"></div>
-                    <div onclick="setColor('#8b5cf6')" class="w-7 h-7 rounded-2xl shadow-inner" style="background:#8b5cf6"></div>
-                    <div onclick="setColor('#f59e0b')" class="w-7 h-7 rounded-2xl shadow-inner" style="background:#f59e0b"></div>
-                    <div onclick="setColor('#ec4899')" class="w-7 h-7 rounded-2xl shadow-inner" style="background:#ec4899"></div>
-                    <div onclick="setColor('#14b8a6')" class="w-7 h-7 rounded-2xl shadow-inner" style="background:#14b8a6"></div>
+            <div class="text-sm text-base-content/60 flex gap-x-6 mt-8">
+                <div class="flex items-center gap-x-2"><span class="badge badge-success">LIVE</span> Real-time P2P</div>
+                <div>Works perfectly on mobile &amp; desktop</div>
+                <div>Powered by DaisyUI + Tailwind</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DRAWING SCREEN -->
+    <div id="drawing-screen" class="hidden flex flex-col lg:flex-row h-[calc(100vh-65px)]">
+        
+        <!-- PROFESSIONAL TOOLBAR -->
+        <div class="lg:w-72 bg-base-100 border-r border-base-200 p-6 flex flex-col">
+            <h3 class="text-xl font-semibold mb-6 flex items-center gap-x-2">
+                <span class="text-primary">✏️</span> Drawing Tools
+            </h3>
+            
+            <div class="flex gap-x-2 mb-8">
+                <button onclick="selectTool('brush')" id="tool-brush" 
+                        class="toolbar-button btn btn-square btn-primary active flex-1 h-14 text-3xl">🖌️</button>
+                <button onclick="selectTool('eraser')" id="tool-eraser" 
+                        class="toolbar-button btn btn-square btn-ghost flex-1 h-14 text-3xl">⌫</button>
+            </div>
+            
+            <!-- Colors -->
+            <div class="mb-8">
+                <p class="text-sm font-medium mb-3">Colors</p>
+                <div class="grid grid-cols-4 gap-3">
+                    <div onclick="setColor('#000000')" class="w-9 h-9 rounded-2xl cursor-pointer shadow-inner" style="background:#000000"></div>
+                    <div onclick="setColor('#ef4444')" class="w-9 h-9 rounded-2xl cursor-pointer shadow-inner" style="background:#ef4444"></div>
+                    <div onclick="setColor('#3b82f6')" class="w-9 h-9 rounded-2xl cursor-pointer shadow-inner" style="background:#3b82f6"></div>
+                    <div onclick="setColor('#10b981')" class="w-9 h-9 rounded-2xl cursor-pointer shadow-inner" style="background:#10b981"></div>
+                    <div onclick="setColor('#8b5cf6')" class="w-9 h-9 rounded-2xl cursor-pointer shadow-inner" style="background:#8b5cf6"></div>
+                    <div onclick="setColor('#f59e0b')" class="w-9 h-9 rounded-2xl cursor-pointer shadow-inner" style="background:#f59e0b"></div>
+                    <div onclick="setColor('#ec4899')" class="w-9 h-9 rounded-2xl cursor-pointer shadow-inner" style="background:#ec4899"></div>
+                    <div onclick="setColor('#14b8a6')" class="w-9 h-9 rounded-2xl cursor-pointer shadow-inner" style="background:#14b8a6"></div>
                 </div>
-                
-                <!-- Brush size -->
-                <div class="flex-1 md:flex-none px-2 w-full md:w-auto">
-                    <div class="text-[10px] uppercase tracking-widest text-slate-400 mb-1 text-center">Size</div>
-                    <div class="flex gap-x-1 md:flex-col md:gap-y-2">
-                        <button onclick="setBrushSize(6)" id="size-1" class="flex-1 md:w-11 h-9 md:h-8 text-xs font-medium rounded-2xl border border-slate-600 hover:border-indigo-300 active">S</button>
-                        <button onclick="setBrushSize(14)" id="size-2" class="flex-1 md:w-11 h-9 md:h-8 text-xs font-medium rounded-2xl border border-slate-600 hover:border-indigo-300">M</button>
-                        <button onclick="setBrushSize(28)" id="size-3" class="flex-1 md:w-11 h-9 md:h-8 text-xs font-medium rounded-2xl border border-slate-600 hover:border-indigo-300">L</button>
+            </div>
+            
+            <!-- Brush Size -->
+            <div class="mb-8">
+                <p class="text-sm font-medium mb-3">Brush Size</p>
+                <div class="flex gap-2">
+                    <button onclick="setBrushSize(6)" id="size-1" class="btn btn-sm flex-1 active">Thin</button>
+                    <button onclick="setBrushSize(14)" id="size-2" class="btn btn-sm flex-1">Medium</button>
+                    <button onclick="setBrushSize(28)" id="size-3" class="btn btn-sm flex-1">Thick</button>
+                </div>
+            </div>
+            
+            <div class="flex-1"></div>
+            
+            <div class="flex gap-x-3">
+                <button onclick="undo()" class="btn btn-ghost flex-1 gap-x-2">↩️ Undo</button>
+                <button onclick="clearCanvas()" class="btn btn-error btn-ghost flex-1 gap-x-2">🗑️ Clear</button>
+            </div>
+            
+            <button onclick="submitDrawing()" class="btn btn-primary btn-block mt-8 text-lg h-14">SUBMIT DOODLE →</button>
+        </div>
+        
+        <!-- CANVAS -->
+        <div class="flex-1 flex items-center justify-center p-6 lg:p-10 canvas-wrapper">
+            <canvas id="main-canvas" width="800" height="600" class="rounded-3xl"></canvas>
+        </div>
+        
+        <!-- RIGHT INFO -->
+        <div class="lg:w-72 bg-base-100 border-l border-base-200 p-6 hidden lg:flex flex-col">
+            <div class="flex-1">
+                <div class="stats shadow w-full">
+                    <div class="stat">
+                        <div class="stat-title">Your creation</div>
+                        <div id="drawing-status" class="stat-value text-primary text-4xl">Ready</div>
+                        <div class="stat-desc">No time limit • Pure freedom</div>
                     </div>
                 </div>
-                
-                <div class="flex-1"></div>
-                
-                <button onclick="undo()" class="flex flex-col items-center text-slate-400 hover:text-white text-xs font-medium flex-shrink-0">
-                    <span class="text-3xl mb-1">↩️</span> UNDO
-                </button>
-                <button onclick="clearCanvas()" class="flex flex-col items-center text-rose-400 hover:text-rose-500 text-xs font-medium flex-shrink-0">
-                    <span class="text-3xl mb-1">🗑️</span> CLEAR
-                </button>
             </div>
+            <button onclick="leaveRoom()" class="btn btn-ghost mt-auto">← Exit to lobby</button>
+        </div>
+    </div>
+
+    <!-- BATTLE SCREEN -->
+    <div id="battle-screen" class="hidden min-h-[calc(100vh-65px)] p-6 lg:p-10 bg-base-300">
+        
+        <div id="waiting-phase" class="hidden flex-col items-center justify-center h-full">
+            <div class="loading loading-spinner loading-lg text-primary mb-6"></div>
+            <h3 class="text-2xl font-semibold">Waiting for everyone to submit...</h3>
+        </div>
+        
+        <div id="voting-phase" class="hidden">
+            <h2 class="text-4xl font-bold text-center mb-10 title-font">Vote for the best doodle</h2>
+            <div id="voting-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"></div>
             
-            <!-- CANVAS AREA -->
-            <div class="flex-1 flex items-center justify-center bg-slate-950 p-4 md:p-8 canvas-container">
-                <canvas id="main-canvas" width="720" height="560" class="rounded-2xl"></canvas>
-            </div>
-            
-            <!-- RIGHT PANEL -->
-            <div class="right-panel w-full md:w-72 bg-slate-900 border-t md:border-l border-slate-800 p-6 flex flex-col">
-                <h3 class="font-semibold mb-6 flex items-center gap-x-2"><span class="text-indigo-400">🎨</span> YOUR DOODLE</h3>
-                
-                <div id="drawing-status" class="text-sm text-slate-400 mb-8">
-                    Draw anything you want.<br>
-                    <span class="font-medium text-indigo-300">Kuch bhi bana lo, you can't beat the legendary HONNESH SOSE</span>
-                </div>
-                
-                <button onclick="submitDrawing()" 
-                        class="mt-auto bg-indigo-500 hover:bg-indigo-600 w-full py-5 rounded-3xl text-white font-semibold text-xl flex items-center justify-center gap-x-3">
-                    SUBMIT DOODLE <span class="text-2xl">→</span>
-                </button>
-                
-                <button onclick="leaveRoom()" class="mt-4 text-slate-400 hover:text-slate-200 text-sm py-3">← Back to lobby</button>
+            <div class="flex justify-center mt-12">
+                <button onclick="submitVote()" id="submit-vote-btn" 
+                        class="btn btn-success btn-lg px-12">LOCK IN YOUR VOTE</button>
             </div>
         </div>
-
-        <!-- BATTLE / VOTING / RESULTS -->
-        <div id="battle-screen" class="hidden min-h-[calc(100vh-65px)] p-6 md:p-8">
-            <div id="waiting-phase" class="hidden text-center py-20">
-                <div class="inline-flex items-center gap-x-3 bg-slate-900 rounded-3xl px-8 py-4 text-sm">
-                    <div class="w-3 h-3 bg-yellow-400 animate-pulse rounded-full"></div>
-                    Waiting for friends to finish drawing...
-                </div>
-            </div>
+        
+        <div id="results-phase" class="hidden">
+            <h2 class="text-4xl font-bold text-center mb-10 title-font">Final Results</h2>
+            <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"></div>
             
-            <div id="voting-phase" class="hidden">
-                <h2 class="text-3xl font-semibold text-center mb-8">Vote for the best doodle</h2>
-                <div id="voting-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-                <div class="text-center mt-12">
-                    <button onclick="submitVote()" id="submit-vote-btn"
-                            class="bg-emerald-500 hover:bg-emerald-600 px-14 py-6 rounded-3xl text-2xl font-semibold text-white">LOCK IN VOTE</button>
-                </div>
-            </div>
-            
-            <div id="results-phase" class="hidden">
-                <h2 class="text-3xl font-semibold text-center mb-6">Battle Results</h2>
-                <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-                <div class="flex justify-center gap-x-6 mt-12">
-                    <button onclick="newRound()" class="px-10 py-4 bg-slate-800 hover:bg-slate-700 rounded-3xl font-medium text-lg flex items-center gap-x-2">🔄 REMATCH</button>
-                    <button onclick="leaveRoom()" class="px-10 py-4 text-slate-400 hover:text-white flex items-center gap-x-2 text-lg">Back to lobby</button>
-                </div>
+            <div class="flex justify-center gap-x-6 mt-16">
+                <button onclick="newRound()" class="btn btn-primary btn-lg">🔄 Start New Round</button>
+                <button onclick="leaveRoom()" class="btn btn-ghost btn-lg">Back to Lobby</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Tailwind init
-        function initializeTailwind() { return { config() { return { content: [], theme: { extend: {} }, plugins: [] } } } }
-        
-        // Global variables
-        let peer = null
-        let conn = null
-        let isHost = false
-        let roomId = ''           // Now = actual peer.id (full string)
-        let myNickname = ''
-        let myPeerId = ''
-        
-        let players = {}
-        let submittedDrawings = {}
-        let currentVotes = {}
-        
-        // Canvas
-        let canvas, ctx
-        let isDrawing = false
-        let lastX = 0, lastY = 0
-        let currentColor = '#000000'
-        let brushSize = 14
-        let isEraser = false
-        let undoStack = []
-        const maxUndo = 30
-        
+        // Global variables (unchanged logic)
+        let peer = null, conn = null, isHost = false, roomId = '', myNickname = '', myPeerId = ''
+        let players = {}, submittedDrawings = {}, currentVotes = {}
+        let canvas, ctx, isDrawing = false, lastX = 0, lastY = 0
+        let currentColor = '#000000', brushSize = 14, isEraser = false, undoStack = []
+        const maxUndo = 40
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-        
-        // ============== PEERJS WITH BETTER MOBILE SUPPORT ==============
+
+        // ============== PEERJS (professional config) ==============
         function initPeer(callback) {
             if (peer) peer.destroy()
-            
             peer = new Peer(null, {
                 debug: 1,
                 config: {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
                         { urls: 'stun:stun1.l.google.com:19302' },
-                        { urls: 'stun:stun2.l.google.com:19302' }
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:global.stun.twilio.com:3478' }
                     ]
                 }
             })
-            
-            peer.on('open', id => {
-                myPeerId = id
-                console.log('✅ Peer ready. Your ID:', id)
-                if (callback) callback(id)
-            })
-            
+            peer.on('open', id => { myPeerId = id; if (callback) callback(id) })
             peer.on('connection', incoming => {
                 conn = incoming
-                conn.on('open', () => {
-                    console.log('✅ Friend connected')
-                    isHost = true
-                    updateRoomUI()
-                })
+                conn.on('open', () => { isHost = true; updateRoomUI() })
                 conn.on('data', handleIncomingData)
-                conn.on('error', e => console.error('Conn error', e))
             })
-            
             peer.on('error', err => {
-                console.error('Peer error:', err)
-                if (err.type === 'peer-unavailable') alert('Room not found or host left. Try a new room.')
+                if (err.type === 'peer-unavailable') alert('Room not found. Ask the host to refresh and share the ID again.')
             })
         }
-        
+
         function createRoom() {
-            myNickname = document.getElementById('nickname-input').value.trim() || 'Doodler' + Math.floor(Math.random()*999)
-            initPeer((id) => {
+            myNickname = document.getElementById('nickname-input').value.trim() || 'ProDoodler' + Math.floor(Math.random()*999)
+            initPeer(id => {
                 isHost = true
-                roomId = id                     // ← THIS WAS THE BUG! Now using real peer ID
+                roomId = id
                 document.getElementById('lobby-screen').classList.add('hidden')
                 document.getElementById('drawing-screen').classList.remove('hidden')
                 updateRoomUI()
-                console.log('Room created — share this full ID with friends')
             })
         }
-        
+
         function joinRoom() {
             const input = document.getElementById('join-id-input').value.trim()
-            if (!input) return alert('Paste the full Room ID from your friend')
-            
-            myNickname = document.getElementById('nickname-input').value.trim() || 'Doodler' + Math.floor(Math.random()*999)
-            
+            if (!input) return alert('Please paste the full Room ID')
+            myNickname = document.getElementById('nickname-input').value.trim() || 'ProDoodler' + Math.floor(Math.random()*999)
             initPeer(() => {
-                conn = peer.connect(input)      // Connect using the full peer ID
+                conn = peer.connect(input)
                 conn.on('open', () => {
-                    console.log('✅ Joined room successfully')
                     roomId = input
-                    isHost = false
                     document.getElementById('lobby-screen').classList.add('hidden')
                     document.getElementById('drawing-screen').classList.remove('hidden')
                     updateRoomUI()
                 })
                 conn.on('data', handleIncomingData)
-                conn.on('error', e => alert('Could not join — check ID or ask host to refresh'))
             })
         }
-        
+
         function updateRoomUI() {
             document.getElementById('nav-room').classList.remove('hidden')
-            const display = document.getElementById('room-code-display')
-            display.textContent = roomId.length > 12 ? roomId.substring(0, 12) + '...' : roomId
+            document.getElementById('room-code-display').textContent = roomId.length > 14 ? roomId.substring(0, 14) + '…' : roomId
             document.getElementById('player-name-display').classList.remove('hidden')
-            document.getElementById('player-name-display').innerHTML = `👤 ${myNickname}`
+            document.getElementById('nickname-show').textContent = myNickname
         }
-        
+
         function copyRoomID() {
             navigator.clipboard.writeText(roomId).then(() => {
                 const btn = event.target
                 const orig = btn.innerHTML
                 btn.innerHTML = '✅ Copied!'
-                setTimeout(() => btn.innerHTML = orig, 1400)
+                setTimeout(() => btn.innerHTML = orig, 1500)
             })
         }
-        
-        // ============== DATA HANDLER ==============
+
+        // ============== DATA & CANVAS (same reliable logic) ==============
         function handleIncomingData(data) {
             if (data.type === 'drawing-submitted') {
                 submittedDrawings[data.peerId] = data.base64
                 players[data.peerId] = { nickname: data.nickname, drawingBase64: data.base64 }
                 if (isHost) checkAllSubmitted()
-            }
-            else if (data.type === 'vote') {
+            } else if (data.type === 'vote') {
                 if (isHost) {
                     currentVotes[data.voterId] = data.votedForId
                     tallyVotesAndBroadcast()
                 }
-            }
-            else if (data.type === 'all-submitted') {
+            } else if (data.type === 'all-submitted') {
                 players = data.players
                 submittedDrawings = data.drawings
                 showVotingPhase()
-            }
-            else if (data.type === 'results') {
+            } else if (data.type === 'results') {
                 showResultsPhase(data.players)
-            }
-            else if (data.type === 'new-round') {
+            } else if (data.type === 'new-round') {
                 resetForNewRound()
             }
         }
-        
-        function sendData(payload) {
-            if (conn && conn.open) conn.send(payload)
-        }
-        
-        // ============== RESPONSIVE CANVAS (mobile-optimized) ==============
+
+        function sendData(payload) { if (conn && conn.open) conn.send(payload) }
+
         function initCanvas() {
             canvas = document.getElementById('main-canvas')
             ctx = canvas.getContext('2d')
-            
             resizeCanvas()
             window.addEventListener('resize', resizeCanvas)
             
@@ -345,261 +321,166 @@
             canvas.addEventListener('mouseup', stopDrawing)
             canvas.addEventListener('mouseout', stopDrawing)
             
-            // Touch — optimized for phones
-            canvas.addEventListener('touchstart', e => { e.preventDefault(); startDrawing(e.touches[0]) })
-            canvas.addEventListener('touchmove', e => { e.preventDefault(); draw(e.touches[0]) })
-            canvas.addEventListener('touchend', stopDrawing)
+            // Touch (professional prevention)
+            canvas.addEventListener('touchstart', e => { e.preventDefault(); startDrawing(e.touches[0]) }, { passive: false })
+            canvas.addEventListener('touchmove', e => { e.preventDefault(); draw(e.touches[0]) }, { passive: false })
+            canvas.addEventListener('touchend', stopDrawing, { passive: false })
             
-            // Initial white canvas
+            document.body.addEventListener('touchmove', e => {
+                if (e.target.closest('canvas')) e.preventDefault()
+            }, { passive: false })
+            
             ctx.fillStyle = '#ffffff'
             ctx.fillRect(0, 0, canvas.width, canvas.height)
             saveUndoState()
         }
-        
+
         function resizeCanvas() {
-            const maxWidth = isMobile ? Math.min(720, window.innerWidth - 32) : 720
-            const aspect = 560 / 720
-            
-            canvas.width = maxWidth
-            canvas.height = Math.floor(maxWidth * aspect)
-            
-            // Reset to white (new drawing session)
+            const maxW = isMobile ? Math.min(800, window.innerWidth - 48) : 800
+            canvas.width = maxW
+            canvas.height = Math.floor(maxW * 0.75)
             ctx.fillStyle = '#ffffff'
             ctx.fillRect(0, 0, canvas.width, canvas.height)
             undoStack = []
             saveUndoState()
-            
-            // Larger default brush on phones
-            if (isMobile) brushSize = 18
+            if (isMobile) brushSize = 20
         }
-        
-        function startDrawing(e) {
-            isDrawing = true
-            const rect = canvas.getBoundingClientRect()
-            lastX = (e.clientX || e.pageX) - rect.left
-            lastY = (e.clientY || e.pageY) - rect.top
-            saveUndoState()
-        }
-        
+
+        function startDrawing(e) { isDrawing = true; const r = canvas.getBoundingClientRect(); lastX = (e.clientX||e.pageX)-r.left; lastY = (e.clientY||e.pageY)-r.top; saveUndoState() }
         function draw(e) {
             if (!isDrawing) return
-            const rect = canvas.getBoundingClientRect()
-            const x = (e.clientX || e.pageX) - rect.left
-            const y = (e.clientY || e.pageY) - rect.top
-            
+            const r = canvas.getBoundingClientRect()
+            const x = (e.clientX||e.pageX)-r.left
+            const y = (e.clientY||e.pageY)-r.top
             ctx.save()
-            if (isEraser) {
-                ctx.globalCompositeOperation = 'destination-out'
-                ctx.lineWidth = brushSize * 1.8
-            } else {
-                ctx.globalCompositeOperation = 'source-over'
-                ctx.lineWidth = brushSize
-                ctx.strokeStyle = currentColor
-            }
-            ctx.lineCap = 'round'
-            ctx.lineJoin = 'round'
-            ctx.beginPath()
-            ctx.moveTo(lastX, lastY)
-            ctx.lineTo(x, y)
-            ctx.stroke()
+            if (isEraser) { ctx.globalCompositeOperation = 'destination-out'; ctx.lineWidth = brushSize*1.8 }
+            else { ctx.globalCompositeOperation = 'source-over'; ctx.lineWidth = brushSize; ctx.strokeStyle = currentColor }
+            ctx.lineCap = 'round'; ctx.lineJoin = 'round'
+            ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke()
             ctx.restore()
-            
-            lastX = x
-            lastY = y
+            lastX = x; lastY = y
         }
-        
-        function stopDrawing() {
-            if (isDrawing) { isDrawing = false; saveUndoState() }
-        }
-        
-        function saveUndoState() {
-            if (undoStack.length >= maxUndo) undoStack.shift()
-            undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height))
-        }
-        
-        function undo() {
-            if (undoStack.length < 2) return
-            undoStack.pop()
-            ctx.putImageData(undoStack[undoStack.length - 1], 0, 0)
-        }
-        
+        function stopDrawing() { if (isDrawing) { isDrawing = false; saveUndoState() } }
+        function saveUndoState() { if (undoStack.length >= maxUndo) undoStack.shift(); undoStack.push(ctx.getImageData(0,0,canvas.width,canvas.height)) }
+        function undo() { if (undoStack.length < 2) return; undoStack.pop(); ctx.putImageData(undoStack[undoStack.length-1],0,0) }
         function clearCanvas() {
-            ctx.fillStyle = '#ffffff'
-            ctx.fillRect(0, 0, canvas.width, canvas.height)
-            undoStack = []
-            saveUndoState()
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height)
+            undoStack = []; saveUndoState()
         }
-        
-        function selectTool(tool) {
-            document.querySelectorAll('.toolbar-button').forEach(el => el.classList.remove('active'))
-            if (tool === 'brush') { isEraser = false; document.getElementById('tool-brush').classList.add('active') }
-            else if (tool === 'eraser') { isEraser = true; document.getElementById('tool-eraser').classList.add('active') }
+        function selectTool(t) {
+            document.querySelectorAll('.toolbar-button').forEach(b=>b.classList.remove('active','btn-primary'))
+            if (t==='brush') { isEraser=false; document.getElementById('tool-brush').classList.add('active','btn-primary') }
+            else { isEraser=true; document.getElementById('tool-eraser').classList.add('active','btn-primary') }
         }
-        
-        function setColor(color) {
-            currentColor = color
-            isEraser = false
-            document.querySelectorAll('.toolbar-button').forEach(el => el.classList.remove('active'))
-            document.getElementById('tool-brush').classList.add('active')
-        }
-        
-        function setBrushSize(size) {
-            brushSize = size
-            document.querySelectorAll('#size-1, #size-2, #size-3').forEach(b => b.classList.remove('active', 'border-indigo-300'))
-            if (size === 6) document.getElementById('size-1').classList.add('active', 'border-indigo-300')
-            if (size === 14) document.getElementById('size-2').classList.add('active', 'border-indigo-300')
-            if (size === 28) document.getElementById('size-3').classList.add('active', 'border-indigo-300')
-        }
-        
-        // ============== SUBMIT + BATTLE FLOW ==============
+        function setColor(c) { currentColor = c; isEraser=false; selectTool('brush') }
+        function setBrushSize(s) { brushSize = s; document.querySelectorAll('#size-1,#size-2,#size-3').forEach(b=>b.classList.remove('active','btn-primary')); document.getElementById('size-'+(s===6?1:s===14?2:3)).classList.add('active','btn-primary') }
+
         function submitDrawing() {
             const base64 = canvas.toDataURL('image/png', 0.92)
-            
             players[myPeerId] = { nickname: myNickname, drawingBase64: base64 }
             submittedDrawings[myPeerId] = base64
-            
-            sendData({
-                type: 'drawing-submitted',
-                peerId: myPeerId,
-                nickname: myNickname,
-                base64: base64
-            })
-            
+            sendData({ type: 'drawing-submitted', peerId: myPeerId, nickname: myNickname, base64 })
             document.getElementById('drawing-screen').classList.add('hidden')
             document.getElementById('battle-screen').classList.remove('hidden')
             document.getElementById('waiting-phase').classList.remove('hidden')
-            
             if (isHost) checkAllSubmitted()
         }
-        
+
         function checkAllSubmitted() {
             if (!isHost) return
             if (Object.keys(submittedDrawings).length >= Object.keys(players).length || 1) {
-                sendData({ type: 'all-submitted', players: players, drawings: submittedDrawings })
+                sendData({ type: 'all-submitted', players, drawings: submittedDrawings })
                 showVotingPhase()
             }
         }
-        
+
         function showVotingPhase() {
             document.getElementById('waiting-phase').classList.add('hidden')
             document.getElementById('voting-phase').classList.remove('hidden')
-            
-            const grid = document.getElementById('voting-grid')
-            grid.innerHTML = ''
-            
+            const grid = document.getElementById('voting-grid'); grid.innerHTML = ''
             Object.keys(submittedDrawings).forEach(id => {
                 if (id === myPeerId) return
-                const player = players[id] || { nickname: 'Friend' }
-                const cardHTML = `
-                    <div class="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xl">
-                        <div class="p-4">
-                            <img src="${submittedDrawings[id]}" class="w-full aspect-video object-contain bg-slate-50 rounded-2xl">
-                        </div>
-                        <div class="px-6 pb-6">
-                            <div class="font-medium text-slate-800">${player.nickname}</div>
-                            <button onclick="castVote('${id}', this)" class="mt-4 w-full py-3 text-sm font-semibold border-2 border-slate-300 hover:border-emerald-400 rounded-2xl text-slate-700">VOTE FOR THIS</button>
-                        </div>
-                    </div>`
-                grid.innerHTML += cardHTML
-            })
-            
-            if (Object.keys(submittedDrawings).length < 2) {
-                grid.innerHTML += `<div class="col-span-full text-center py-12 text-slate-400 text-sm">You’re the only one here right now.<br>Share the Room ID with friends!</div>`
-            }
-        }
-        
-        let myVote = null
-        function castVote(targetId, btn) {
-            document.querySelectorAll('#voting-grid button').forEach(b => {
-                b.classList.remove('border-emerald-400', 'bg-emerald-50')
-                b.textContent = 'VOTE FOR THIS'
-            })
-            btn.classList.add('border-emerald-400', 'bg-emerald-50')
-            btn.innerHTML = '✅ VOTED'
-            myVote = targetId
-        }
-        
-        function submitVote() {
-            if (!myVote) return alert('Pick a doodle!')
-            sendData({ type: 'vote', voterId: myPeerId, votedForId: myVote })
-            const btn = document.getElementById('submit-vote-btn')
-            btn.innerHTML = `<span class="animate-pulse">Waiting for votes...</span>`
-            btn.disabled = true
-        }
-        
-        function tallyVotesAndBroadcast() {
-            const voteCount = {}
-            Object.values(currentVotes).forEach(id => voteCount[id] = (voteCount[id] || 0) + 1)
-            
-            Object.keys(players).forEach(id => {
-                players[id].voteCount = voteCount[id] || 0
-            })
-            
-            sendData({ type: 'results', players: players })
-            showResultsPhase(players)
-        }
-        
-        function showResultsPhase(playersData) {
-            document.getElementById('voting-phase').classList.add('hidden')
-            document.getElementById('results-phase').classList.remove('hidden')
-            
-            const grid = document.getElementById('results-grid')
-            grid.innerHTML = ''
-            
-            let maxVotes = Math.max(...Object.values(playersData).map(p => p.voteCount || 0))
-            
-            Object.keys(playersData).forEach(id => {
-                const p = playersData[id]
-                const isWinner = (p.voteCount || 0) === maxVotes && maxVotes > 0
-                
-                const cardHTML = `
-                <div class="bg-white border-4 ${isWinner ? 'border-amber-400' : 'border-slate-200'} rounded-3xl overflow-hidden shadow-2xl relative">
-                    ${isWinner ? `<div class="absolute top-4 right-4 bg-amber-400 text-amber-900 text-xs font-bold px-4 py-1 rounded-3xl">🏆 WINNER</div>` : ''}
-                    <div class="p-4">
-                        <img src="${p.drawingBase64}" class="w-full aspect-video object-contain bg-slate-50 rounded-2xl">
-                    </div>
-                    <div class="px-6 pb-6 flex justify-between items-end">
-                        <div>
-                            <div class="font-semibold text-slate-900">${p.nickname}</div>
-                            <div class="text-emerald-500">${p.voteCount || 0} votes</div>
-                        </div>
+                const p = players[id] || { nickname: 'Friend' }
+                grid.innerHTML += `
+                <div class="card daisy-card bg-base-100 shadow-xl border border-base-200">
+                    <figure class="px-4 pt-4"><img src="${submittedDrawings[id]}" class="rounded-2xl w-full aspect-video object-contain bg-white"></figure>
+                    <div class="card-body">
+                        <h3 class="card-title">${p.nickname}</h3>
+                        <button onclick="castVote('${id}', this)" class="btn btn-outline btn-success">Vote for this doodle</button>
                     </div>
                 </div>`
-                grid.innerHTML += cardHTML
             })
         }
-        
+
+        let myVote = null
+        function castVote(id, btn) {
+            document.querySelectorAll('#voting-grid button').forEach(b => { b.classList.remove('btn-success'); b.textContent = 'Vote for this doodle' })
+            btn.classList.add('btn-success')
+            btn.textContent = '✅ Voted'
+            myVote = id
+        }
+
+        function submitVote() {
+            if (!myVote) return alert('Please select a doodle')
+            sendData({ type: 'vote', voterId: myPeerId, votedForId: myVote })
+            const b = document.getElementById('submit-vote-btn')
+            b.innerHTML = `<span class="loading loading-spinner"></span> Waiting...`
+            b.disabled = true
+        }
+
+        function tallyVotesAndBroadcast() {
+            const counts = {}
+            Object.values(currentVotes).forEach(v => counts[v] = (counts[v]||0)+1)
+            Object.keys(players).forEach(id => players[id].voteCount = counts[id]||0)
+            sendData({ type: 'results', players })
+            showResultsPhase(players)
+        }
+
+        function showResultsPhase(data) {
+            document.getElementById('voting-phase').classList.add('hidden')
+            document.getElementById('results-phase').classList.remove('hidden')
+            const grid = document.getElementById('results-grid'); grid.innerHTML = ''
+            let max = Math.max(...Object.values(data).map(p => p.voteCount||0))
+            Object.keys(data).forEach(id => {
+                const p = data[id]
+                const winner = (p.voteCount||0) === max && max > 0
+                grid.innerHTML += `
+                <div class="card daisy-card bg-base-100 shadow-2xl ${winner?'ring-4 ring-warning':''}">
+                    ${winner?`<div class="absolute top-4 right-4 badge badge-warning">🏆 WINNER</div>`:''}
+                    <figure class="px-4 pt-4"><img src="${p.drawingBase64}" class="rounded-2xl w-full aspect-video object-contain bg-white"></figure>
+                    <div class="card-body">
+                        <h3 class="card-title">${p.nickname}</h3>
+                        <p class="text-success">${p.voteCount||0} votes</p>
+                    </div>
+                </div>`
+            })
+        }
+
         function newRound() {
-            if (!isHost) return alert('Only the host can start a new round')
+            if (!isHost) return alert('Only host can start new round')
             sendData({ type: 'new-round' })
             resetForNewRound()
         }
-        
+
         function resetForNewRound() {
-            submittedDrawings = {}
-            currentVotes = {}
-            players = {}
+            submittedDrawings = {}; currentVotes = {}; players = {}; myVote = null
             document.getElementById('battle-screen').classList.add('hidden')
             document.getElementById('drawing-screen').classList.remove('hidden')
-            resizeCanvas() // fresh canvas
+            resizeCanvas()
         }
-        
+
         function leaveRoom() {
             if (conn) conn.close()
             if (peer) peer.destroy()
             location.reload()
         }
-        
-        // ============== START APP ==============
-        window.onload = function() {
+
+        // ============== START ==============
+        window.onload = () => {
             initCanvas()
-            console.log('%c🎨 Doodle Dominion — fully mobile optimized + fixed joining!', 'color:#6366f1;font-weight:600')
-            
-            // Auto-fill join ID from URL if shared
-            const params = new URLSearchParams(window.location.search)
-            if (params.has('room')) {
-                document.getElementById('join-id-input').value = params.get('room')
-            }
+            console.log('%c🚀 Doodle Dominion — Super Professional Edition (DaisyUI + Tailwind) ready!', 'color:#a855f7;font-weight:700;font-size:14px')
+            const p = new URLSearchParams(location.search)
+            if (p.has('room')) document.getElementById('join-id-input').value = p.get('room')
         }
     </script>
 </body>
